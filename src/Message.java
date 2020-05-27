@@ -1,3 +1,4 @@
+import java.util.Hashtable;
 import java.util.List;
 
 public class Message {
@@ -6,9 +7,10 @@ public class Message {
 	private int receiverID;
 	private int linkBandwidth;
 	private int linkCost;
-	private int[][] distanceTable;
+	private Hashtable<Integer, Hashtable<Integer, Integer>> distanceTable = 
+			new Hashtable<Integer, Hashtable<Integer, Integer>>(0);
 	
-	public Message(int senderID, int receiverID, int linkBandwidth, int linkCost, int[][] distanceTable)
+	public Message(int senderID, int receiverID, int linkBandwidth, int linkCost, Hashtable<Integer, Hashtable<Integer, Integer>> distanceTable)
 	{
 		
 		this.senderID = senderID;
@@ -23,7 +25,7 @@ public class Message {
 		return this.senderID;
 	}
 	
-	public int[][] getDistanceTable()
+	public Hashtable<Integer, Hashtable<Integer, Integer>> getDistanceTable()
 	{
 		return this.distanceTable;
 	}
