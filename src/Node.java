@@ -49,11 +49,9 @@ public class Node implements Runnable{
 		distanceTable = new int[tableSize][tableSize];
 		for(int row = 0; row < tableSize; row++) {
 			for(int col = 0; col < tableSize; col++) {
-				if(row == nodeID && linkCost.containsKey(col)) {
-					neighborIDs.add(col);
-					distanceTable[row][col] = linkCost.get(col);
-				} else if (col == nodeID && linkCost.containsKey(row)) {
-					distanceTable[row][col] = linkCost.get(row);
+				if(linkCost.containsKey(row) && row == col) {
+					neighborIDs.add(row);
+					distanceTable[row][row] = linkCost.get(row);
 				} else {
 					distanceTable[row][col] = 999;					
 				}
@@ -118,79 +116,41 @@ public class Node implements Runnable{
 	public void run()
 	{
 		sendUpdate();
+		isConverged = true;
 		while(!msgQ.isEmpty()) {
 			receiveUpdate(msgQ.poll());		
 		}
+		updateText();
 	}
 	
 	public void receiveUpdate(Message m)
 	{
-		int sender = m.getSenderID();
-		
-
-        for(int row = 0; row < tableSize; row++){
-        	for(int col = 0; col < tableSize; col++) {
-        		int myCost = distanceTable[row][col];
-//        		int incomingCost = incomingTable[row][col];
-//        		distanceTable[row][col] = Math.min(myCost, incomingCost);
-        	}
-        }
-        
-		
+		int sender = m.senderID;
+		Hashtable<Integer, Pair<Integer, Integer>> costTable = m.costTable;
+		for(int k : costTable.keySet()) {
+			int newCost = linkCost.get(k) + costTable.get(k).fst;
+			if(newCost < distanceTable[k][sender]) {
+				distanceTable[k][sender] = newCost;
+				isConverged = false;
+			}
+		}
 	}
 	
 	public boolean sendUpdate()
 	{
-		return false;
+		if(isConverged) {
+			return false;
+		} else {
+			for(int i = 0; i < neighborIDs.size(); i++) {
+				BlockingQueue<Message> q = neighborInboxes.get(i);
+				Message msg = new Message(nodeID, neighborIDs.get(i), getCostTable());
+				q.add(msg);
+			}
+			return true;			
+		}
 	}
 	
-//	public Hashtable<Integer, List<Integer>> getForwardingTable()
-//	{
-//		Hashtable<Integer, List<Integer>> forwardingTable =  
-//	            new Hashtable<Integer, List<Integer>>(); 
-//		
-//		Set<Integer> keys = this.distanceTable.keySet();
-//        for(Integer key: keys)
-//        {
-//        	int min = 999;
-//        	int min2 = 999;
-//        	int target = 999;
-//        	int target2 = 999;
-//        	Set<Integer> keys2 = this.distanceTable.get(key).keySet();
-//        	for(Integer key2: keys2)
-//        	{
-//        		int cost = this.distanceTable.get(key).get(key2);
-//        		if(cost < min2)
-//        		{
-//        			if(cost < min)
-//        			{
-//        				min2 = min;
-//        				target2 = target;
-//        				min = cost;
-//            			target = key2;
-//        			}
-//        			else
-//        			{
-//        				min2 = cost;
-//        				target2 = key2;
-//        			}
-//        			
-//        		}
-//        	}
-//        	if(target != 999 || target2 != 999)
-//        	{
-//        		List<Integer> targetList= new ArrayList<Integer>();
-//        		
-//        		//add example
-//        		targetList.add(target);
-//        		targetList.add(target2);
-//        		
-//        		forwardingTable.put(key, targetList);
-//        	}
-//        }
-//				
-//		return forwardingTable;
-//	}
+
 	
 	private void createWindow() {
 		Frame outFrame = new Frame("Node " + nodeID);

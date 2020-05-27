@@ -75,7 +75,7 @@ public class ModivSim {
 		while(!converged) {
 			try {
 				simText.setText("Round: " + counter);
-				Thread.sleep(1000);
+				Thread.sleep(10000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -87,6 +87,7 @@ public class ModivSim {
 				}
 			}
 		}
+		simText.setText("Simulation over at round: " + counter);
 	}
 
 	public static void main(String[] args) {
@@ -109,6 +110,7 @@ public class ModivSim {
 		for (Node node : nodes) {
 			scheduler.scheduleWithFixedDelay(node, 0, 1, TimeUnit.SECONDS);
 		}
+		System.out.println("Scheduling start");
 		waitForConvergence(nodes, simText);
 		scheduler.shutdown();
 	}
