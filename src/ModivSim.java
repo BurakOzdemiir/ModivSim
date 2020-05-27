@@ -4,97 +4,90 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ModivSim { 
+	
+	private static void initNodes(ArrayList<Node> nodes) throws IOException {
+		File f = new File("nodes.txt");    
+		FileReader fReader = new FileReader(f);   
+		BufferedReader bReader = new BufferedReader(fReader);   
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		ArrayList<String> lines = new ArrayList<String>();  
+		String currentLine;
 		
-		Node[] nodes;
-
-		try  
-		{  
+		while((currentLine = bReader.readLine())!=null)  
+			lines.add(currentLine);
 			
-			File f = new File("nodes.txt");    
-			FileReader fReader = new FileReader(f);   
-			BufferedReader bReader = new BufferedReader(fReader);   
-
-			ArrayList<String> lines = new ArrayList<String>();  
-			String currentLine;
+		int length = lines.size();		
+		for(int i = 0; i < length; i++)
+		{
+			String line = lines.get(i);
 			
-			while((currentLine = bReader.readLine())!=null)  
-				lines.add(currentLine);
-				
-			int length = lines.size();
+			Hashtable<Integer, Integer> linkCost =  
+		            new Hashtable<Integer, Integer>();
+			Hashtable<Integer, Integer> linkBandwidth =  
+		            new Hashtable<Integer, Integer>(); 
 			
-			nodes = new Node[length];
+			line = line.replaceAll("[()]", "");
+			String[] newLine = line.split(",");
 			
-			for(int i = 0; i < length; i++)
+			int x = 1;
+			
+			int nodeID = Integer.valueOf(newLine[0]);
+			while(x < newLine.length)
 			{
 				
-				String line = lines.get(i);
+				int neighborID = Integer.valueOf(newLine[x]);
+				int cost = Integer.valueOf(newLine[x+1]);
+				int bandwidth = Integer.valueOf(newLine[x+2]);
 				
-				//ArrayList<Integer> neighborsAdded = new ArrayList<Integer>();
-				
-				Hashtable<Integer, Integer> linkCost =  
-			            new Hashtable<Integer, Integer>();
-				Hashtable<Integer, Integer> linkBandwidth =  
-			            new Hashtable<Integer, Integer>(); 
-				
-//				int[][] distanceTable = new int[length][length];
-				
-				//System.out.println(length);
-				
-				line = line.replaceAll("[()]", "");
-				String[] newLine = line.split(",");
-				
-				int x = 1;
-				
-				int nodeID = Integer.valueOf(newLine[0]);
-				
-				//System.out.println(newLine);
-				//System.out.println(nodeID);
-				
-//				for (int a = 0; a < length; a++)
-//					for (int y = 0; y < length; y++)
-//							distanceTable[a][y] = 999;
-				
-				while(x < newLine.length)
-				{
-					
-					int neighborID = Integer.valueOf(newLine[x]);
-					int cost = Integer.valueOf(newLine[x+1]);
-					int bandwidth = Integer.valueOf(newLine[x+2]);
-					
-					linkCost.put(neighborID, cost);
-					linkBandwidth.put(neighborID, bandwidth);
-					//System.out.println(nodeID + " " + neighborID);
-					
-//					distanceTable[neighborID][neighborID] = cost;
-//					distanceTable[nodeID][nodeID] = 0;
-//					distanceTable[nodeID][neighborID] = cost * 2;
-					
-					x = x + 3;
-					
-				}
-				
-				Node node = new Node(nodeID, linkCost, linkBandwidth);
-				nodes[i] = node;				
-				
+				linkCost.put(neighborID, cost);
+				linkBandwidth.put(neighborID, bandwidth);
+				x = x + 3;
 			}
-//			for(int m = 0; m < length; m++)
-//				for(int n = 0; n < length; n++)
-//					System.out.println(nodes[0].distanceTable[m][n]);
+			Node node = new Node(nodeID, linkCost, linkBandwidth);
+			nodes.add(node);	
+		}
+		fReader.close();    
+	}
+	
+	private static void waitForConvergence(ArrayList<Node> nodes) {
+		boolean converged = false;
+		while(!converged) {
+//			Thread.sleep(1000);
+//			converged = true;
+			for (Node node : nodes) {
+//				if(!node.isConverged()) {
+//					converged = false;
+//					break;
+//				}
+			}
+		}
+		
+	}
 
-			fReader.close();    
-
+	public static void main(String[] args) {
+		ArrayList<Node> nodes = new ArrayList<Node>();
+		try  
+		{  
+			initNodes(nodes);
 		}  
 		catch(IOException e)  
 		{  
 			e.printStackTrace();  
-		}  
-
+		}
+		ScheduledExecutorService scheduler = new ScheduledThreadPoolExecutor(nodes.size());
+		for (Node node : nodes) {
+			scheduler.scheduleWithFixedDelay(node, 0, 1, TimeUnit.SECONDS);
+			System.out.println("Scheduler started");
+		}
+		waitForConvergence(nodes);
+		for (Node node : nodes) {
+//			node.stopListening();
+		}
+		scheduler.shutdown();
 	}
-
 }

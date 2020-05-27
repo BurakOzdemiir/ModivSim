@@ -1,5 +1,6 @@
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class Node implements Runnable{
 	
@@ -23,9 +24,8 @@ public class Node implements Runnable{
 	
 	public void run()
 	{
-		
-		
-		
+		sendUpdate();
+		System.out.println("Sent update");
 	}
 	
 	public void receiveUpdate(Message m)
@@ -56,8 +56,6 @@ public class Node implements Runnable{
 				
 		return forwardingTable;
 	}
-	
-	
 	
 
 }
