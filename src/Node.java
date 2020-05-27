@@ -25,7 +25,7 @@ public class Node implements Runnable{
 	private TextArea windowOut;
 	
 	private final int tableSize = 5;
-	private final int windowSize = tableSize * 55;
+	private final int windowSize = tableSize * 65;
 	
 	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth)
 	{
@@ -52,6 +52,8 @@ public class Node implements Runnable{
 				if(linkCost.containsKey(row) && row == col) {
 					neighborIDs.add(row);
 					distanceTable[row][row] = linkCost.get(row);
+				} else if(row == nodeID && row == col) {
+					distanceTable[row][col] = 0;
 				} else {
 					distanceTable[row][col] = 999;					
 				}
@@ -64,8 +66,12 @@ public class Node implements Runnable{
  		for(int i = 0; i < tableSize; i++) {
  			int[] bestID = {-1, -1};
  			int[] bestCosts = {999, 999};
+ 			if(i == nodeID) {
+ 				bestCosts[0] = 0;
+ 				bestID[0]= nodeID;
+ 			}
  	 		for(int id : neighborIDs) {
- 	 			int cost = linkCost.get(id) + distanceTable[i][id];
+ 	 			int cost = distanceTable[i][id];
  	 			if(cost < bestCosts[0]){
  	 				bestCosts[1] = bestCosts[0];
  	 				bestID[1] = bestID[0];
@@ -82,21 +88,17 @@ public class Node implements Runnable{
  		return fwdTable;
  	}
  	
- 	public Hashtable<Integer, Pair<Integer, Integer>> getCostTable(){
- 		Hashtable<Integer, Pair<Integer, Integer>> costTable = new Hashtable<>();
+ 	public int[] getCostTable(){
+ 		int[] costTable = new int[tableSize];
  		for(int i = 0; i < tableSize; i++) {
- 			int[] bestCosts = {999, 999};
+ 			int bestCost = 999;
  	 		for(int id : neighborIDs) {
- 	 			int cost = linkCost.get(id) + distanceTable[i][id];
- 	 			if(cost < bestCosts[0]){
- 	 				bestCosts[1] = bestCosts[0];
- 	 				bestCosts[0] = cost;
- 	 			} else if(cost < bestCosts[1]){
- 	 				bestCosts[1] = cost;
+ 	 			int cost = distanceTable[i][id];
+ 	 			if(cost < bestCost){
+ 	 				bestCost = cost;
  	 			}
  	 		}
- 	 		Pair<Integer, Integer> p = new Pair<Integer, Integer>(bestCosts[0], bestCosts[1]);
- 	 		costTable.put(i, p);
+ 	 		costTable[i] = bestCost;
  		}
  		return costTable;
  	}
@@ -118,7 +120,11 @@ public class Node implements Runnable{
 		sendUpdate();
 		isConverged = true;
 		while(!msgQ.isEmpty()) {
-			receiveUpdate(msgQ.poll());		
+			try {
+				receiveUpdate(msgQ.poll());		
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		updateText();
 	}
@@ -126,11 +132,13 @@ public class Node implements Runnable{
 	public void receiveUpdate(Message m)
 	{
 		int sender = m.senderID;
-		Hashtable<Integer, Pair<Integer, Integer>> costTable = m.costTable;
-		for(int k : costTable.keySet()) {
-			int newCost = linkCost.get(k) + costTable.get(k).fst;
-			if(newCost < distanceTable[k][sender]) {
-				distanceTable[k][sender] = newCost;
+		int[] costTable = m.costTable;
+		for(int i = 0; i < tableSize; i++) {
+			int costToN = linkCost.get(sender);
+			int costAfterN = costTable[i];
+			int newCost = costToN + costAfterN;
+			if(newCost < distanceTable[i][sender]) {
+				distanceTable[i][sender] = newCost;
 				isConverged = false;
 			}
 		}
@@ -169,20 +177,48 @@ public class Node implements Runnable{
 	
 	private void updateText() {
 		String str = "";
-		str += "Distance table\n\t";
+		str += "Distance table\n           |\t";
 		for(int col = 0; col < tableSize; col++){
         	str += col + "\t";   
         }
 		str += "\n";
-		for(int row = 0; row < tableSize; row++){
-			if(neighborIDs.contains(row)) {
-				str += row + "\t";
-		        for(int col = 0; col < tableSize; col++){
+		for(int col = 0; col < tableSize + 1; col++){
+        	str += "- - - - -    ";   
+        }
+		str += "\n";
+		for(int col = 0; col < tableSize; col++){
+			if(neighborIDs.contains(col)) {
+				str += col + "         |\t";
+		        for(int row = 0; row < tableSize; row++){
 		        	str += distanceTable[row][col] + "\t";   
 		        }
 		        str += "\n";
 			}
 	    } 
+		Hashtable<Integer, Pair<Integer, Integer>> fwdTable = getForwardingTable();
+		str += "\nForward table\n           |\t";
+		for(int col = 0; col < tableSize; col++){
+        	str += col + "\t";   
+        }
+		str += "\n";
+		for(int col = 0; col < tableSize + 1; col++){
+        	str += "- - - - -    ";   
+        }
+		str += "\nNbr:    |\t";
+		for(int col = 0; col < tableSize; col++){
+			str += fwdTable.get(col).fst + "\t";
+		}
+		str += "\nCost:  |\t";
+		for(int col = 0; col < tableSize; col++){
+			int fwd = fwdTable.get(col).fst;
+			int cost;
+			if(fwd == -1) {
+				cost = 999;
+			} else {
+				cost = distanceTable[col][fwd];
+			}
+			str +=  cost + "\t";
+		}
 		windowOut.setText(str);
 	}
 }

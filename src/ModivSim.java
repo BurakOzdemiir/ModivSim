@@ -62,7 +62,7 @@ public class ModivSim {
 		Frame outFrame = new Frame("Simulator");
 		TextArea windowOut = new TextArea(1, 30);
 		outFrame.add(windowOut);
-		outFrame.setSize(100, 100);
+		outFrame.setSize(300, 100);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		outFrame.setLocation((int)screenSize.getWidth()/2, (int)screenSize.getHeight()/2);
 		outFrame.setVisible(true);
@@ -75,7 +75,8 @@ public class ModivSim {
 		while(!converged) {
 			try {
 				simText.setText("Round: " + counter);
-				Thread.sleep(10000);
+				counter++;
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -110,7 +111,6 @@ public class ModivSim {
 		for (Node node : nodes) {
 			scheduler.scheduleWithFixedDelay(node, 0, 1, TimeUnit.SECONDS);
 		}
-		System.out.println("Scheduling start");
 		waitForConvergence(nodes, simText);
 		scheduler.shutdown();
 	}
