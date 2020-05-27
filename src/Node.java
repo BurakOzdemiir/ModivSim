@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -12,7 +14,7 @@ public class Node implements Runnable{
             new Hashtable<Integer, Integer>(); 
 	private Hashtable<Integer, Hashtable<Integer, Integer>> distanceTable = 
 			new Hashtable<Integer, Hashtable<Integer, Integer>>(0);
-	private int bottleneckBandwidthTable[];
+	private Hashtable<Integer, Integer> bottleneckBandwidthTable;
 	
 	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth)
 	{
@@ -32,6 +34,11 @@ public class Node implements Runnable{
 		Set<Integer> keys = linkCost.keySet();
         for(Integer key: keys){
             distanceTable.get(key).put(key, linkCost.get(key));
+        }
+        
+        Set<Integer> bkeys = linkBandwidth.keySet();
+        for(Integer key: bkeys){
+            bottleneckBandwidthTable.put(key, linkBandwidth.get(key));
         }
 		
 		
@@ -76,27 +83,49 @@ public class Node implements Runnable{
 		
 	}
 	
-	public Hashtable<Integer, Integer> getForwardingTable()
+	public Hashtable<Integer, List<Integer>> getForwardingTable()
 	{
-		Hashtable<Integer, Integer> forwardingTable =  
-	            new Hashtable<Integer, Integer>(); 
+		Hashtable<Integer, List<Integer>> forwardingTable =  
+	            new Hashtable<Integer, List<Integer>>(); 
 		
 		Set<Integer> keys = this.distanceTable.keySet();
         for(Integer key: keys)
         {
         	int min = 999;
+        	int min2 = 999;
         	int target = 999;
+        	int target2 = 999;
         	Set<Integer> keys2 = this.distanceTable.get(key).keySet();
         	for(Integer key2: keys2)
         	{
-        		if(this.distanceTable.get(key).get(key2) < min)
+        		int cost = this.distanceTable.get(key).get(key2);
+        		if(cost < min2)
         		{
-        			min = distanceTable.get(key).get(key2);
-        			target = key2;
+        			if(cost < min)
+        			{
+        				min2 = min;
+        				target2 = target;
+        				min = cost;
+            			target = key2;
+        			}
+        			else
+        			{
+        				min2 = cost;
+        				target2 = key2;
+        			}
+        			
         		}
         	}
-        	if(target != 999)
-        		forwardingTable.put(key, target);
+        	if(target != 999 || target2 != 999)
+        	{
+        		List<Integer> targetList= new ArrayList<Integer>();
+        		
+        		//add example
+        		targetList.add(target);
+        		targetList.add(target2);
+        		
+        		forwardingTable.put(key, targetList);
+        	}
         }
 				
 		return forwardingTable;
