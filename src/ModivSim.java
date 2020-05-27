@@ -57,13 +57,17 @@ public class ModivSim {
 	private static void waitForConvergence(ArrayList<Node> nodes) {
 		boolean converged = false;
 		while(!converged) {
-//			Thread.sleep(1000);
-//			converged = true;
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			converged = true;
 			for (Node node : nodes) {
-//				if(!node.isConverged()) {
-//					converged = false;
-//					break;
-//				}
+				if(!node.isConverged()) {
+					converged = false;
+					break;
+				}
 			}
 		}
 		
