@@ -8,10 +8,10 @@ public class Node implements Runnable{
             new Hashtable<Integer, Integer>();
 	private Hashtable<Integer, Integer> linkBandwidth =  
             new Hashtable<Integer, Integer>(); 
-	List<Integer>[] distanceTable;
+	int[][] distanceTable;
 	private int bottleneckBandwidthTable[];
 	
-	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth, List<Integer>[] distanceTable)
+	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth, int[][] distanceTable)
 	{
 		
 		this.nodeID = nodeID;
@@ -30,14 +30,12 @@ public class Node implements Runnable{
 	
 	public void receiveUpdate(Message m)
 	{
+		int sender = m.getSenderID();
 		
 		for(int i = 0; i < distanceTable.length; i++)
-		{
-			
-			if(distanceTable[i].get(m.getSenderID()) > m.getDistanceTable()
-			
-		}
-		
+			for(int j = 0; j < distanceTable.length; j++)
+				if(distanceTable[i][sender] > m.getDistanceTable()[i][j] + linkCost.get(sender))
+					distanceTable[i][sender] = m.getDistanceTable()[i][j] + linkCost.get(sender);
 	}
 	
 	public boolean sendUpdate()
@@ -48,8 +46,15 @@ public class Node implements Runnable{
 	
 	public Hashtable<Integer, Integer> getForwardingTable()
 	{
-		return linkBandwidth;
+		Hashtable<Integer, Integer> forwardingTable =  
+	            new Hashtable<Integer, Integer>(); 
 		
+		int length = distanceTable[0].length;
+		for (int i = 0; i < length; i++)
+			for(int j = 0; j < length; j++)
+				System.out.println("");
+				
+		return forwardingTable;
 	}
 	
 	

@@ -37,7 +37,8 @@ public class ModivSim {
 				
 				String line = lines.get(i);
 				
-				int nodeID = line.charAt(0);
+				
+				
 				
 				ArrayList<Integer> neighborsAdded = new ArrayList<Integer>();
 				
@@ -46,13 +47,23 @@ public class ModivSim {
 				Hashtable<Integer, Integer> linkBandwidth =  
 			            new Hashtable<Integer, Integer>(); 
 				
-				List<Integer>[] distanceTable = new List[length]; 
+				int[][] distanceTable = new int[length][length];
 				
+				//System.out.println(length);
 				
 				line = line.replaceAll("[()]", "");
 				String[] newLine = line.split(",");
 				
 				int x = 1;
+				
+				int nodeID = Integer.valueOf(newLine[0]);
+				
+				//System.out.println(newLine);
+				//System.out.println(nodeID);
+				
+				for (int a = 0; a < length; a++)
+					for (int y = 0; y < length; y++)
+							distanceTable[a][y] = 999;
 				
 				while(x < newLine.length)
 				{
@@ -61,29 +72,25 @@ public class ModivSim {
 					int cost = Integer.valueOf(newLine[x+1]);
 					int bandwidth = Integer.valueOf(newLine[x+2]);
 					
-					neighborsAdded.add(neighborID);
-					
 					linkCost.put(neighborID, cost);
 					linkBandwidth.put(neighborID, bandwidth);
+					//System.out.println(nodeID + " " + neighborID);
 					
-					distanceTable[neighborID] = new ArrayList<>();
-					distanceTable[neighborID].add(neighborID, cost);
+					distanceTable[neighborID][neighborID] = cost;
+					distanceTable[nodeID][nodeID] = 0;
+					distanceTable[nodeID][neighborID] = cost * 2;
 					
 					x = x + 3;
 					
 				}
 				
-				for(int j = 0; j < length; i++) // initializing indirect neighbor costs to infinity
-					if(!neighborsAdded.contains(j))
-					{
-						distanceTable[j] = new ArrayList<>();
-						distanceTable[j].add(j, 999);
-					}
-				
 				Node node = new Node(nodeID, linkCost, linkBandwidth, distanceTable);
 				nodes[i] = node;				
 				
 			}
+			for(int m = 0; m < length; m++)
+				for(int n = 0; n < length; n++)
+					System.out.println(nodes[0].distanceTable[m][n]);
 
 			fReader.close();    
 

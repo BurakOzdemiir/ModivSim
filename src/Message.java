@@ -6,9 +6,9 @@ public class Message {
 	private int receiverID;
 	private int linkBandwidth;
 	private int linkCost;
-	private List<Integer>[] distanceTable;
+	private int[][] distanceTable;
 	
-	public Message(int senderID, int receiverID, int linkBandwidth, int linkCost, List<Integer>[] distanceTable)
+	public Message(int senderID, int receiverID, int linkBandwidth, int linkCost, int[][] distanceTable)
 	{
 		
 		this.senderID = senderID;
@@ -23,7 +23,7 @@ public class Message {
 		return this.senderID;
 	}
 	
-	public List<Integer>[] getDistanceTable()
+	public int[][] getDistanceTable()
 	{
 		return this.distanceTable;
 	}
