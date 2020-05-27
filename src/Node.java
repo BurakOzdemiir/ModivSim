@@ -1,26 +1,31 @@
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.TextArea;
-import java.awt.TextField;
 import java.awt.Toolkit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import com.sun.tools.javac.util.Pair;
 
 public class Node implements Runnable{
 	private int nodeID;
+	public ArrayList<Integer> neighborIDs;
 	
-	private final int tableSize = 5;
-	private final int windowSize = 300;
+	public ArrayList<BlockingQueue<Message>> neighborInboxes;
+	public BlockingQueue<Message> msgQ;
+	
 	private Hashtable<Integer, Integer> linkCost;
 	private Hashtable<Integer, Integer> linkBandwidth;
 	private int[][] distanceTable;
 	private int[] bottleneckBandwidthTable;
 	
-	private volatile boolean isConverged = false; 
+	public volatile boolean isConverged = false; 
 	private TextArea windowOut;
+	
+	private final int tableSize = 5;
+	private final int windowSize = tableSize * 55;
 	
 	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth)
 	{
@@ -28,17 +33,24 @@ public class Node implements Runnable{
 		this.linkCost = linkCost;
 		this.linkBandwidth = linkBandwidth;
 		
+		neighborIDs = new ArrayList<>();
+		msgQ = new LinkedBlockingQueue<>();
 		initDistTable();
 		initBandwidthTable();
 		createWindow();
 		updateText();
 	}
 	
-	private void initDistTable() {
+	public void setupNeighborMessaging(ArrayList<BlockingQueue<Message>> inboxes) {
+		neighborInboxes = inboxes;
+	}
+
+ 	private void initDistTable() {
 		distanceTable = new int[tableSize][tableSize];
 		for(int row = 0; row < tableSize; row++) {
 			for(int col = 0; col < tableSize; col++) {
 				if(row == nodeID && linkCost.containsKey(col)) {
+					neighborIDs.add(col);
 					distanceTable[row][col] = linkCost.get(col);
 				} else if (col == nodeID && linkCost.containsKey(row)) {
 					distanceTable[row][col] = linkCost.get(row);
@@ -48,6 +60,49 @@ public class Node implements Runnable{
 			}
 		}
 	}
+ 	
+ 	public Hashtable<Integer, Pair<Integer, Integer>> getForwardingTable(){
+ 		Hashtable<Integer, Pair<Integer, Integer>> fwdTable = new Hashtable<>();
+ 		for(int i = 0; i < tableSize; i++) {
+ 			int[] bestID = {-1, -1};
+ 			int[] bestCosts = {999, 999};
+ 	 		for(int id : neighborIDs) {
+ 	 			int cost = linkCost.get(id) + distanceTable[i][id];
+ 	 			if(cost < bestCosts[0]){
+ 	 				bestCosts[1] = bestCosts[0];
+ 	 				bestID[1] = bestID[0];
+ 	 				bestCosts[0] = cost;
+ 	 				bestID[0] = id;
+ 	 			} else if(cost < bestCosts[1]){
+ 	 				bestCosts[1] = cost;
+ 	 				bestID[1] = id;
+ 	 			}
+ 	 		}
+ 	 		Pair<Integer, Integer> p = new Pair<Integer, Integer>(bestID[0], bestID[1]);
+ 			fwdTable.put(i, p);
+ 		}
+ 		return fwdTable;
+ 	}
+ 	
+ 	public Hashtable<Integer, Pair<Integer, Integer>> getCostTable(){
+ 		Hashtable<Integer, Pair<Integer, Integer>> costTable = new Hashtable<>();
+ 		for(int i = 0; i < tableSize; i++) {
+ 			int[] bestCosts = {999, 999};
+ 	 		for(int id : neighborIDs) {
+ 	 			int cost = linkCost.get(id) + distanceTable[i][id];
+ 	 			if(cost < bestCosts[0]){
+ 	 				bestCosts[1] = bestCosts[0];
+ 	 				bestCosts[0] = cost;
+ 	 			} else if(cost < bestCosts[1]){
+ 	 				bestCosts[1] = cost;
+ 	 			}
+ 	 		}
+ 	 		Pair<Integer, Integer> p = new Pair<Integer, Integer>(bestCosts[0], bestCosts[1]);
+ 	 		costTable.put(i, p);
+ 		}
+ 		return costTable;
+ 	}
+	
 	
 	private void initBandwidthTable() {
 		bottleneckBandwidthTable = new int[tableSize];
@@ -63,34 +118,26 @@ public class Node implements Runnable{
 	public void run()
 	{
 		sendUpdate();
-		System.out.println("Sent update");
+		while(!msgQ.isEmpty()) {
+			receiveUpdate(msgQ.poll());		
+		}
 	}
 	
-//	public void receiveUpdate(Message m)
-//	{
-//		int sender = m.getSenderID();
-//		
-//		Set<Integer> keys = m.getDistanceTable().keySet();
-//        for(Integer key: keys){
-//        	Set<Integer> keys2 = m.getDistanceTable().get(key).keySet();
-//            for(Integer key2: keys2){
-//            	int cost = m.getDistanceTable().get(key).get(key2) + linkCost.get(sender);
-//            	if(distanceTable.contains(key))
-//            	{
-//            		if(distanceTable.get(key).contains(key2))
-//            		{
-//            			if(distanceTable.get(key).get(key2) > cost)
-//            				distanceTable.get(key).put(key2, cost);
-//            		}
-//            		else
-//            		{
-//            			distanceTable.get(key).put(key2, cost);
-//            		}
-//            	}
-//            }  		
-//        }
-//		
-//	}
+	public void receiveUpdate(Message m)
+	{
+		int sender = m.getSenderID();
+		
+
+        for(int row = 0; row < tableSize; row++){
+        	for(int col = 0; col < tableSize; col++) {
+        		int myCost = distanceTable[row][col];
+//        		int incomingCost = incomingTable[row][col];
+//        		distanceTable[row][col] = Math.min(myCost, incomingCost);
+        	}
+        }
+        
+		
+	}
 	
 	public boolean sendUpdate()
 	{
@@ -154,14 +201,13 @@ public class Node implements Runnable{
 		int heightInWindows = (int)screenSize.getHeight() / windowSize;
 		int row = nodeID % heightInWindows;
 		int col = nodeID / heightInWindows;
-		int x = windowSize*col;
+		int x = (windowSize*col) % (int)screenSize.getWidth();
 		int y = windowSize*row;
 		outFrame.setLocation(x, y);
 		outFrame.setVisible(true);
 	}
 	
 	private void updateText() {
-//		String str = (Arrays.deepToString(distanceTable).replace("], ", "]\n"));
 		String str = "";
 		str += "Distance table\n\t";
 		for(int col = 0; col < tableSize; col++){
@@ -169,16 +215,14 @@ public class Node implements Runnable{
         }
 		str += "\n";
 		for(int row = 0; row < tableSize; row++){
-			str += row + "\t";
-	        for(int col = 0; col < tableSize; col++){
-	        	str += distanceTable[row][col] + "\t";   
-	        }
-	        str += "\n";
+			if(neighborIDs.contains(row)) {
+				str += row + "\t";
+		        for(int col = 0; col < tableSize; col++){
+		        	str += distanceTable[row][col] + "\t";   
+		        }
+		        str += "\n";
+			}
 	    } 
 		windowOut.setText(str);
-	}
-	
-	public boolean isConverged() {
-		return isConverged;
 	}
 }
