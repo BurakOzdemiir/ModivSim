@@ -11,13 +11,13 @@ public class Node implements Runnable{
 	int[][] distanceTable;
 	private int bottleneckBandwidthTable[];
 	
-	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth, int[][] distanceTable)
+	public Node(int nodeID, Hashtable<Integer, Integer> linkCost, Hashtable<Integer, Integer> linkBandwidth)
 	{
 		
 		this.nodeID = nodeID;
 		this.linkCost = linkCost;
 		this.linkBandwidth = linkBandwidth;
-		this.distanceTable = distanceTable;
+		
 		
 	}
 	

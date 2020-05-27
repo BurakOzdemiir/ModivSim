@@ -6,9 +6,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-public class ModivSim {
-	
-	static ArrayList<Node> nodes; 
+public class ModivSim { 
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -37,17 +35,14 @@ public class ModivSim {
 				
 				String line = lines.get(i);
 				
-				
-				
-				
-				ArrayList<Integer> neighborsAdded = new ArrayList<Integer>();
+				//ArrayList<Integer> neighborsAdded = new ArrayList<Integer>();
 				
 				Hashtable<Integer, Integer> linkCost =  
 			            new Hashtable<Integer, Integer>();
 				Hashtable<Integer, Integer> linkBandwidth =  
 			            new Hashtable<Integer, Integer>(); 
 				
-				int[][] distanceTable = new int[length][length];
+//				int[][] distanceTable = new int[length][length];
 				
 				//System.out.println(length);
 				
@@ -61,9 +56,9 @@ public class ModivSim {
 				//System.out.println(newLine);
 				//System.out.println(nodeID);
 				
-				for (int a = 0; a < length; a++)
-					for (int y = 0; y < length; y++)
-							distanceTable[a][y] = 999;
+//				for (int a = 0; a < length; a++)
+//					for (int y = 0; y < length; y++)
+//							distanceTable[a][y] = 999;
 				
 				while(x < newLine.length)
 				{
@@ -76,21 +71,21 @@ public class ModivSim {
 					linkBandwidth.put(neighborID, bandwidth);
 					//System.out.println(nodeID + " " + neighborID);
 					
-					distanceTable[neighborID][neighborID] = cost;
-					distanceTable[nodeID][nodeID] = 0;
-					distanceTable[nodeID][neighborID] = cost * 2;
+//					distanceTable[neighborID][neighborID] = cost;
+//					distanceTable[nodeID][nodeID] = 0;
+//					distanceTable[nodeID][neighborID] = cost * 2;
 					
 					x = x + 3;
 					
 				}
 				
-				Node node = new Node(nodeID, linkCost, linkBandwidth, distanceTable);
+				Node node = new Node(nodeID, linkCost, linkBandwidth);
 				nodes[i] = node;				
 				
 			}
-			for(int m = 0; m < length; m++)
-				for(int n = 0; n < length; n++)
-					System.out.println(nodes[0].distanceTable[m][n]);
+//			for(int m = 0; m < length; m++)
+//				for(int n = 0; n < length; n++)
+//					System.out.println(nodes[0].distanceTable[m][n]);
 
 			fReader.close();    
 
