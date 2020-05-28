@@ -117,6 +117,7 @@ public class Node implements Runnable{
 
 	public void run()
 	{
+
 		sendUpdate();
 		isConverged = true;
 		while(!msgQ.isEmpty()) {
@@ -127,6 +128,22 @@ public class Node implements Runnable{
 			}
 		}
 		updateText();
+	}
+
+	public void changeLinkCost(int neighbor, int newCost){
+		isConverged = false;
+		int oldCost = linkCost.get(neighbor);
+		linkCost.replace(neighbor,newCost);
+		int diffrence = newCost - oldCost;
+		updateDistanceTable(neighbor, diffrence);
+
+	}
+
+	public void updateDistanceTable(int neighbor, int difference){
+		for(int i=0;i<distanceTable.length;i++){
+			distanceTable[i][neighbor] += difference;
+		}
+
 	}
 	
 	public void receiveUpdate(Message m)
@@ -179,18 +196,18 @@ public class Node implements Runnable{
 		String str = "";
 		str += "Distance table\n           |\t";
 		for(int col = 0; col < tableSize; col++){
-        	str += col + "\t";   
+        	str += col + "\t";
         }
 		str += "\n";
 		for(int col = 0; col < tableSize + 1; col++){
-        	str += "- - - - -    ";   
+        	str += "- - - - -    ";
         }
 		str += "\n";
 		for(int col = 0; col < tableSize; col++){
 			if(neighborIDs.contains(col)) {
 				str += col + "         |\t";
 		        for(int row = 0; row < tableSize; row++){
-		        	str += distanceTable[row][col] + "\t";   
+		        	str += distanceTable[row][col] + "\t";
 		        }
 		        str += "\n";
 			}
@@ -198,11 +215,11 @@ public class Node implements Runnable{
 		Hashtable<Integer, Pair<Integer, Integer>> fwdTable = getForwardingTable();
 		str += "\nForward table\n           |\t";
 		for(int col = 0; col < tableSize; col++){
-        	str += col + "\t";   
+        	str += col + "\t";
         }
 		str += "\n";
 		for(int col = 0; col < tableSize + 1; col++){
-        	str += "- - - - -    ";   
+        	str += "- - - - -    ";
         }
 		str += "\nNbr:    |\t";
 		for(int col = 0; col < tableSize; col++){
@@ -220,5 +237,9 @@ public class Node implements Runnable{
 			str +=  cost + "\t";
 		}
 		windowOut.setText(str);
+	}
+
+	public int getNodeID(){
+		return this.nodeID;
 	}
 }
