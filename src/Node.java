@@ -242,4 +242,9 @@ public class Node implements Runnable{
 	public int getNodeID(){
 		return this.nodeID;
 	}
+	public Hashtable<Integer, Integer> getLinkBandwidth(){
+		return this.linkBandwidth;
+	}
+
+
 }
